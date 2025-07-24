@@ -8,32 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var bags: [Bag] = [
-        Bag(name: "Gym Bag"),
-        Bag(name: "Work Backpack"),
-        Bag(name: "Hiking Pack")
-    ]
-
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(bags) { bag in
-                    Text(bag.name)
+        TabView {
+            BagsView()
+                .tabItem {
+                    Label("Bags", systemImage: "bag.fill")
                 }
-            }
-            .navigationTitle("Baggage Claim")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: addBag) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-        }
-    }
 
-    private func addBag() {
-        bags.append(Bag(name: "New Bag"))
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+        }
     }
 }
 
