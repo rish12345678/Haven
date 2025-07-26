@@ -79,13 +79,16 @@ struct BagsView: View {
 
 class BagsViewModel: ObservableObject {
     @Published var bags: [Bag]
+    private let locationManager = LocationManager()
 
     init() {
         self.bags = DataManager.shared.loadBags()
+        startMonitoringAllBags()
     }
 
     func save() {
         DataManager.shared.save(bags: bags)
+        updateAllMonitoredRegions()
     }
 
     func addBag(name: String) {
@@ -95,8 +98,25 @@ class BagsViewModel: ObservableObject {
     }
 
     func deleteBag(at offsets: IndexSet) {
+        let bagsToRemove = offsets.map { self.bags[$0] }
+        for bag in bagsToRemove {
+            locationManager.stopMonitoring(for: bag)
+        }
         bags.remove(atOffsets: offsets)
         save()
+    }
+
+    private func startMonitoringAllBags() {
+        for bag in bags {
+            locationManager.startMonitoring(for: bag)
+        }
+    }
+
+    private func updateAllMonitoredRegions() {
+        for region in locationManager.monitoredRegions {
+            locationManager.stopMonitoring(for: region as! CLCircularRegion)
+        }
+        startMonitoringAllBags()
     }
 }
 
