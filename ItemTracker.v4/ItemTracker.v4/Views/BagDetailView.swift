@@ -1,39 +1,67 @@
 import SwiftUI
 
 struct BagDetailView: View {
-    @Binding var bag: Bag
+    @ObservedObject var bag: Bag
+    @EnvironmentObject var bagsViewModel: BagsViewModel
+    @State private var isShowingAddItemSheet = false
     @State private var newItemName = ""
 
     var body: some View {
         List {
-            ForEach($bag.items) { $item in
+            ForEach(bag.items) { item in
                 HStack {
+                    Button(action: {
+                        item.isPacked.toggle()
+                        bagsViewModel.save()
+                    }) {
+                        Image(systemName: item.isPacked ? "checkmark.circle.fill" : "circle")
+                    }
                     Text(item.name)
-                    Spacer()
-                    // We will add a toggle here later for packing status
                 }
             }
             .onDelete(perform: deleteItem)
-
-            HStack {
-                TextField("New Item", text: $newItemName)
-                Button(action: addItem) {
-                    Image(systemName: "plus.circle.fill")
-                }
-                .disabled(newItemName.isEmpty)
-            }
         }
         .navigationTitle(bag.name)
+        .toolbar {
+            Button(action: { isShowingAddItemSheet = true }) {
+                Image(systemName: "plus")
+            }
+        }
+        .sheet(isPresented: $isShowingAddItemSheet) {
+            NavigationView {
+                Form {
+                    TextField("Item Name", text: $newItemName)
+                }
+                .navigationTitle("New Item")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            isShowingAddItemSheet = false
+                            newItemName = ""
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            if !newItemName.isEmpty {
+                                addItem(name: newItemName)
+                                isShowingAddItemSheet = false
+                                newItemName = ""
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    private func addItem() {
-        guard !newItemName.isEmpty else { return }
-        let newItem = Item(name: newItemName)
+    private func addItem(name: String) {
+        let newItem = Item(name: name)
         bag.items.append(newItem)
-        newItemName = ""
+        bagsViewModel.save()
     }
 
     private func deleteItem(at offsets: IndexSet) {
         bag.items.remove(atOffsets: offsets)
+        bagsViewModel.save()
     }
 } 

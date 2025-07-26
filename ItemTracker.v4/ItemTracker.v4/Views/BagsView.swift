@@ -1,23 +1,35 @@
 import SwiftUI
 
 struct BagsView: View {
-    @State private var bags: [Bag] = [
-        Bag(name: "Gym Bag", items: [Item(name: "Water Bottle"), Item(name: "Towel")]),
-        Bag(name: "Work Backpack", items: [Item(name: "Laptop"), Item(name: "Charger"), Item(name: "Notebook")]),
-        Bag(name: "Hiking Pack", items: [Item(name: "Snacks"), Item(name: "Sunscreen"), Item(name: "First-Aid Kit")])
-    ]
+    @StateObject private var bags = BagsViewModel()
     @State private var isShowingAddBagSheet = false
     @State private var newBagName = ""
 
     var body: some View {
         NavigationView {
-            List {
-                ForEach($bags) { $bag in
-                    NavigationLink(destination: BagDetailView(bag: $bag)) {
-                        Text(bag.name)
+            Group {
+                if bags.bags.isEmpty {
+                    VStack {
+                        Text("No bags yet!")
+                            .font(.title)
+                        Button(action: { isShowingAddBagSheet = true }) {
+                            Text("Add your first bag")
+                                .padding()
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                    }
+                } else {
+                    List {
+                        ForEach(bags.bags) { bag in
+                            NavigationLink(destination: BagDetailView(bag: bag).environmentObject(bags)) {
+                                Text(bag.name)
+                            }
+                        }
+                        .onDelete(perform: deleteBag)
                     }
                 }
-                .onDelete(perform: deleteBag)
             }
             .navigationTitle("Your Bags")
             .toolbar {
@@ -43,7 +55,7 @@ struct BagsView: View {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Save") {
                                 if !newBagName.isEmpty {
-                                    addBag(name: newBagName)
+                                    bags.addBag(name: newBagName)
                                     isShowingAddBagSheet = false
                                     newBagName = ""
                                 }
@@ -52,16 +64,39 @@ struct BagsView: View {
                     }
                 }
             }
+            .environmentObject(bags)
         }
     }
 
     private func addBag(name: String) {
-        let newBag = Bag(name: name, items: [])
-        bags.append(newBag)
+        bags.addBag(name: name)
     }
 
     private func deleteBag(at offsets: IndexSet) {
+        bags.deleteBag(at: offsets)
+    }
+}
+
+class BagsViewModel: ObservableObject {
+    @Published var bags: [Bag]
+
+    init() {
+        self.bags = DataManager.shared.loadBags()
+    }
+
+    func save() {
+        DataManager.shared.save(bags: bags)
+    }
+
+    func addBag(name: String) {
+        let newBag = Bag(name: name, items: [])
+        bags.append(newBag)
+        save()
+    }
+
+    func deleteBag(at offsets: IndexSet) {
         bags.remove(atOffsets: offsets)
+        save()
     }
 }
 
