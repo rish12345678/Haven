@@ -4,28 +4,45 @@ struct BagDetailView: View {
     @ObservedObject var bag: Bag
     @EnvironmentObject var bagsViewModel: BagsViewModel
     @State private var isShowingAddItemSheet = false
+    @State private var isShowingMapView = false
     @State private var newItemName = ""
 
     var body: some View {
         List {
-            ForEach(bag.items) { item in
-                HStack {
-                    Button(action: {
-                        item.isPacked.toggle()
-                        bagsViewModel.save()
-                    }) {
-                        Image(systemName: item.isPacked ? "checkmark.circle.fill" : "circle")
-                    }
-                    Text(item.name)
+            Section(header: Text("Location")) {
+                if let locationName = bag.locationName {
+                    Text(locationName)
+                }
+                Button(action: { isShowingMapView = true }) {
+                    Text(bag.locationName == nil ? "Set Location" : "Change Location")
                 }
             }
-            .onDelete(perform: deleteItem)
+
+            Section(header: Text("Items")) {
+                ForEach(bag.items) { item in
+                    HStack {
+                        Button(action: {
+                            item.isPacked.toggle()
+                            bagsViewModel.save()
+                        }) {
+                            Image(systemName: item.isPacked ? "checkmark.circle.fill" : "circle")
+                        }
+                        Text(item.name)
+                    }
+                }
+                .onDelete(perform: deleteItem)
+            }
         }
         .navigationTitle(bag.name)
         .toolbar {
             Button(action: { isShowingAddItemSheet = true }) {
                 Image(systemName: "plus")
             }
+        }
+        .sheet(isPresented: $isShowingMapView, onDismiss: {
+            bagsViewModel.save()
+        }) {
+            MapView(latitude: $bag.latitude, longitude: $bag.longitude, locationName: $bag.locationName)
         }
         .sheet(isPresented: $isShowingAddItemSheet) {
             NavigationView {
