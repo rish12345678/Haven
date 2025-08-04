@@ -46,8 +46,8 @@ struct MapView: View {
                 TextField("Search for a location", text: $searchQuery)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-                    .onChange(of: searchQuery) { newValue in
-                        locationSearchService.search(query: newValue)
+                    .onChange(of: searchQuery) {
+                        locationSearchService.search(query: searchQuery)
                     }
 
                 if !locationSearchService.completions.isEmpty {
@@ -61,11 +61,13 @@ struct MapView: View {
                     .frame(height: 200)
                 }
                 
-                Map(coordinateRegion: $region, annotationItems: annotation == nil ? [] : [annotation!]) { item in
-                    MapPin(coordinate: item.annotation.coordinate)
+                Map(initialPosition: .region(region)) {
+                    if let annotation = annotation {
+                        Marker(annotation.annotation.title ?? "", coordinate: annotation.annotation.coordinate)
+                    }
                 }
                 .onTapGesture {
-                    // We'll add pin dropping functionality here later if needed
+//                    Something happens
                 }
             }
             .navigationTitle("Set Location")

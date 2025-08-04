@@ -1,13 +1,21 @@
 import Foundation
 import SwiftUI
 
-class Bag: Identifiable, Codable, ObservableObject {
+class Bag: Identifiable, Codable, ObservableObject, Hashable { // Perhaps use Equatable as well
     @Published var name: String
     @Published var items: [Item]
     @Published var locationName: String?
     @Published var latitude: Double?
     @Published var longitude: Double?
     let id: UUID
+
+    static func == (lhs: Bag, rhs: Bag) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 
     enum CodingKeys: String, CodingKey {
         case id, name, items, locationName, latitude, longitude
