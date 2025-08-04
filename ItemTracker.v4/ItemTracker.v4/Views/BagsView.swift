@@ -110,6 +110,7 @@ class BagsViewModel: ObservableObject {
     init() {
         self.bags = DataManager.shared.loadBags()
         startMonitoringAllBags()
+        NotificationCenter.default.addObserver(self, selector: #selector(updateAllMonitoredRegions), name: .geofenceRadiusChanged, object: nil)
     }
 
     func save() {
@@ -138,7 +139,7 @@ class BagsViewModel: ObservableObject {
         }
     }
 
-    private func updateAllMonitoredRegions() {
+    @objc private func updateAllMonitoredRegions() {
         let currentRegions = locationManager.monitoredRegions
         for region in currentRegions {
             locationManager.stopMonitoring(for: region)

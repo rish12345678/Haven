@@ -14,16 +14,6 @@ struct ContentView: View {
                 .tabItem {
                     Label("Bags", systemImage: "bag.fill")
                 }
-            
-            LocationPermissionView()
-                .tabItem {
-                    Label("Location", systemImage: "location.fill")
-                }
-            
-            NotificationPermissionView()
-                .tabItem {
-                    Label("Notifications", systemImage: "bell.fill")
-                }
 
             SettingsView()
                 .tabItem {

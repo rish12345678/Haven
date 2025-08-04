@@ -21,7 +21,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func startMonitoring(for bag: Bag) {
         guard let lat = bag.latitude, let lon = bag.longitude else { return }
         let center = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        let region = CLCircularRegion(center: center, radius: 100, identifier: bag.id.uuidString) // 100m radius
+        let radius = SettingsManager.shared.loadGeofenceRadius()
+        let region = CLCircularRegion(center: center, radius: radius, identifier: bag.id.uuidString)
         region.notifyOnEntry = true
         region.notifyOnExit = true
         locationManager.startMonitoring(for: region)

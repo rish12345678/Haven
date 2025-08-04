@@ -3,8 +3,10 @@ import SwiftUI
 struct BagDetailView: View {
     @ObservedObject var bag: Bag
     @EnvironmentObject var bagsViewModel: BagsViewModel
+    @StateObject private var locationManager = LocationManager()
     @State private var isShowingAddItemSheet = false
     @State private var isShowingMapView = false
+    @State private var showLocationDeniedAlert = false
     @State private var newItemName = ""
 
     var body: some View {
@@ -13,7 +15,9 @@ struct BagDetailView: View {
                 if let locationName = bag.locationName {
                     Text(locationName)
                 }
-                Button(action: { isShowingMapView = true }) {
+                Button(action: {
+                    checkLocationPermission()
+                }) {
                     Text(bag.locationName == nil ? "Set Location" : "Change Location")
                 }
             }
@@ -41,6 +45,7 @@ struct BagDetailView: View {
         }
         .sheet(isPresented: $isShowingMapView, onDismiss: {
             bagsViewModel.save()
+            NotificationManager.shared.requestPermission()
         }) {
             MapView(latitude: $bag.latitude, longitude: $bag.longitude, locationName: $bag.locationName)
         }
@@ -68,6 +73,31 @@ struct BagDetailView: View {
                     }
                 }
             }
+        }
+        .alert(isPresented: $showLocationDeniedAlert) {
+            Alert(
+                title: Text("Location Access Denied"),
+                message: Text("Please enable location services in Settings to use this feature."),
+                primaryButton: .default(Text("Settings"), action: {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }),
+                secondaryButton: .cancel()
+            )
+        }
+    }
+
+    private func checkLocationPermission() {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestLocationPermission()
+        case .authorizedWhenInUse, .authorizedAlways:
+            isShowingMapView = true
+        case .denied, .restricted:
+            showLocationDeniedAlert = true
+        @unknown default:
+            break
         }
     }
 
